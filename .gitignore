@@ -1,0 +1,11 @@
+.venv
+
+**/__pycache__
+**/__mypycache__
+**/*.pyc
+
+mega-1-fp16_v14_artifacts
+mini-1_v0_artifacts
+
+*.jpg
+

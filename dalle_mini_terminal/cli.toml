@@ -1,0 +1,12 @@
+[artifacts]
+number = 1
+alternatives = ['a']
+
+[help]
+number = 0
+alternatives = ['h', 'x']
+
+[version]
+number = 0
+alternatives = ['v', 'V']
+
