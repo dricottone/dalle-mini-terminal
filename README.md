@@ -1,17 +1,28 @@
-# DALL-E Mini in the Terminal
+# DALL-E Mini in a Terminal
 
-Run the [DALL-E Mini model](https://github.com/borisdayma/dalle-mini) in the terminal.
+Run the [DALL-E Mini model](https://github.com/borisdayma/dalle-mini) in a
+terminal.
+
+I've taken the upstream project's inference pipeline notebook and reimplemented
+as a normal Python module.
+Currently does not perform the 'optional' CLIP scoring and sorting.
+And obviously this module runs headlessly;
+images are saved locally.
 
 
 
 ## Usage
+
+The project can be setup (into a virtual environment for all dependencies)
+by running `make install`.
 
 Download the latest DALL-E mini model artifacts to a local `artifacts` folder.
 See [W&B for these downloads](https://wandb.ai/dalle-mini/dalle-mini/artifacts).
 The **mega** model is tagged as `mega-1-fp16`,
 while the **mini** model is tagged as `mini-1`.
 
-Run `python -m dalle-mini-terminal -a path/to/artifacts -- avocado toast` 
+Try running with
+`python -m dalle-mini-terminal -a path/to/artifacts -- avocado toast` 
 It will take a while though, even with the mini model.
 
 ```
@@ -28,15 +39,17 @@ sys     0m17.885s
 
 ### CUDA
 
-Install `cuda` and `cudnn` packages.
-Also, probably need to reboot to load the kernel modules.
+Install the proprietary nvidia driver,
+as well as the `cuda` and `cudnn` packages.
+Likely also necessary to reboot, in order to load the kernel modules.
 
-Arch Linux packages install the headers and binaries under `/opt`.
-Debian-based distributions often use `/usr/lib`.
-The underlying Python libraries assume that the cuda toolchain lives in
+On Arch Linux, cuda libraries and binaries install into `/opt`,
+while the cudnn libraries install into `/usr/lib`.
+Debian-based distributions often use `/usr/lib` for both cuda and cuddn.
+The underlying Python modules assume that the entire toolchain lives in
 `/usr/local/cuda-MAJOR.MINOR`.
 
-So if using Arch Linux, you also need to run:
+In other words, if using Arch Linux, it's also necessary to run:
 
 ```
 sudo ln -s /opt/cuda /usr/local/cuda-11.7
@@ -45,8 +58,28 @@ sudo ln -s /usr/lib/libcudnn*.so /usr/local/cuda-11.7/lib64/
 sudo ln -s /usr/lib/libcudnn*.a /usr/local/cuda-11.7/lib64/
 ```
 
-It will eat a lot of VRAM though;
-far more than my measly 950 has to offer.
+The project can then be setup with `make install-cuda`.
+Running will eat a lot of VRAM though;
+far more than my measly GTX 950 has to offer.
+
+
+
+## To-Do
+
+ + Factor logic and functionality (e.g. `print_version`) out of `__main__.py`
+   into an `internals.py` file.
+ + Figure out how to automate downloading W&B artifacts in a Makefile.
+ + Experiment with re-writing the codebase under the assumption that there is
+   no GPU/TPU.
+   + e.g. is there a cost to `flax.jax_utils.replicate`?
+     It doesn't do anything for a CPU workload.
+   + or is there any benefit to parallelism (via `jax.pmap`) when there is just
+     one compute unit?
+     (i.e. `jax.device_count() == 1`)
+ + Figure out how to reflect flavors (in the BSD sense) in `pyproject.toml`,
+   so that this project can be `pipx` installable both with and without cuda.
+   + [Maybe not an option?](https://github.com/python-poetry/poetry/issues/2613)
+ + Figure out if `mypy` is an option with this dependency chain.
 
 
 
