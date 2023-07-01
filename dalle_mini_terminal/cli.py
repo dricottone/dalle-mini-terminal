@@ -5,7 +5,7 @@ import re
 def main(arguments):
 	config=dict()
 	positional=[]
-	pattern=re.compile(r"(?:-(?:a|h|x|v|V)|--(?:artifacts|help|version))(?:=.*)?$")
+	pattern=re.compile(r"(?:-(?:d|h|x|o|V|v)|--(?:dalle|help|output|version|vqgan))(?:=.*)?$")
 	consuming,needing,wanting=None,0,0
 	attached_value=None
 	def log(*values): pass
@@ -37,14 +37,14 @@ def main(arguments):
 				log(f'{option} has an attached value')
 				option,attached_value=option.split('=',1)
 			log(f'{option} is an option')
-			if option=="artifacts":
+			if option=="dalle":
 				if attached_value is not None:
-					config["artifacts"]=attached_value
+					config["dalle"]=attached_value
 					attached_value=None
 					consuming,needing,wanting=None,0,0
 				else:
-					config["artifacts"]=None
-					consuming,needing,wanting="artifacts",1,1
+					config["dalle"]=None
+					consuming,needing,wanting="dalle",1,1
 			elif option=="help":
 				if attached_value is not None:
 					message=(
@@ -53,6 +53,14 @@ def main(arguments):
 					)
 					raise ValueError(message) from None
 				config["help"]=True
+			elif option=="output":
+				if attached_value is not None:
+					config["output"]=attached_value
+					attached_value=None
+					consuming,needing,wanting=None,0,0
+				else:
+					config["output"]=None
+					consuming,needing,wanting="output",1,1
 			elif option=="version":
 				if attached_value is not None:
 					message=(
@@ -61,14 +69,22 @@ def main(arguments):
 					)
 					raise ValueError(message) from None
 				config["version"]=True
-			elif option=="a":
+			elif option=="vqgan":
 				if attached_value is not None:
-					config["artifacts"]=attached_value
+					config["vqgan"]=attached_value
 					attached_value=None
 					consuming,needing,wanting=None,0,0
 				else:
-					config["artifacts"]=None
-					consuming,needing,wanting="artifacts",1,1
+					config["vqgan"]=None
+					consuming,needing,wanting="vqgan",1,1
+			elif option=="d":
+				if attached_value is not None:
+					config["dalle"]=attached_value
+					attached_value=None
+					consuming,needing,wanting=None,0,0
+				else:
+					config["dalle"]=None
+					consuming,needing,wanting="dalle",1,1
 			elif option=="h":
 				if attached_value is not None:
 					message=(
@@ -85,14 +101,14 @@ def main(arguments):
 					)
 					raise ValueError(message) from None
 				config["help"]=True
-			elif option=="v":
+			elif option=="o":
 				if attached_value is not None:
-					message=(
-						'unexpected value while parsing "version"'
-						' (expected 0 values)'
-					)
-					raise ValueError(message) from None
-				config["version"]=True
+					config["output"]=attached_value
+					attached_value=None
+					consuming,needing,wanting=None,0,0
+				else:
+					config["output"]=None
+					consuming,needing,wanting="output",1,1
 			elif option=="V":
 				if attached_value is not None:
 					message=(
@@ -101,6 +117,14 @@ def main(arguments):
 					)
 					raise ValueError(message) from None
 				config["version"]=True
+			elif option=="v":
+				if attached_value is not None:
+					config["vqgan"]=attached_value
+					attached_value=None
+					consuming,needing,wanting=None,0,0
+				else:
+					config["vqgan"]=None
+					consuming,needing,wanting="vqgan",1,1
 		else:
 			positional.append(arguments.pop(0))
 	if needing>0:

@@ -1,12 +1,20 @@
-[artifacts]
+[dalle]
 number = 1
-alternatives = ['a']
+alternatives = ['d']
 
 [help]
 number = 0
 alternatives = ['h', 'x']
 
+[output]
+number = 1
+alternatives = ['o']
+
 [version]
 number = 0
-alternatives = ['v', 'V']
+alternatives = ['V']
+
+[vqgan]
+number = 1
+alternatives = ['v']
 

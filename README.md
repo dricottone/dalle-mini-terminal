@@ -1,86 +1,79 @@
 # DALL-E Mini in a Terminal
 
-Run the [DALL-E Mini model](https://github.com/borisdayma/dalle-mini) in a
-terminal.
-
-I've taken the upstream project's inference pipeline notebook and reimplemented
-as a normal Python module.
-Currently does not perform the 'optional' CLIP scoring and sorting.
-And obviously this module runs headlessly;
-images are saved locally.
-
+Generate an image from the
+[DALL-E Mini model](https://github.com/borisdayma/dalle-mini).
+All without leaving the terminal.
+A simplistic refactoring of the official project's inference pipeline notebook.
 
 
 ## Usage
 
-The project can be setup (into a virtual environment for all dependencies)
-by running `make install`.
+Download the pretrained VQGAN and DALL-E mini models from
+[here](https://huggingface.co/dalle-mini/vqgan_imagenet_f16_16384/tree/e93a26e7707683d349bf5d5c41c5b0ef69b677a9).
+and
+[here](https://huggingface.co/dalle-mini/dalle-mini/tree/e0888f668d60b9009e1a00ef4b6c155ec7512610).
 
-Download the latest DALL-E mini model artifacts to a local `artifacts` folder.
-See [W&B for these downloads](https://wandb.ai/dalle-mini/dalle-mini/artifacts).
-The **mega** model is tagged as `mega-1-fp16`,
-while the **mini** model is tagged as `mini-1`.
-
-Try running with
-`python -m dalle-mini-terminal -a path/to/artifacts -- avocado toast` 
-It will take a while though, even with the mini model.
+Run `make install` to install into a virtualenv.
 
 ```
-$ time (source .venv/bin/activate; python -m dalle_mini_terminal --artifacts ./mini-1_v0_artifacts -- cats playing chess)
+$ time (. .venv/bin/activate; python -m dalle_mini_terminal \
+> --dalle ./mini-1_v0_artifacts \
+> --vqgan ./vqgan_imagenet_f16_16384_artifacts \
+> -- your prompt should go here)
+Generating images with prompt: cats playing chess
+WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
 
-[...]
-
-real    79m59.554s
-user    85m35.281s
-sys     0m17.885s
+real    6m0.490s
+user    6m32.701s
+sys     0m5.739s
 ```
 
+Some notes:
+ + The first time `dalle_mini_terminal` runs, a list of words will be
+   downloaded to `~/.cache/huggingface/hub/models--dalle-mini--dalle-mini`.
+   This is an unavoidable side-effect from importing `dalle_mini`.
+
+Or run `make build` to build the container image.
+
+```
+$ time sudo docker run --rm --interactive --tty \
+> --mount type=bind,src="$(pwd)/mini-1_v0_artifacts",dst=/dalle-artifacts \
+> --mount type=bind,src="$(pwd)/vqgan_imagenet_f16_16384_artifacts",dst=/vqgan_artifacts \
+> --mount type=bind,src="$(pwd)/output",dst=/output \
+> dalle_mini_terminal \
+> your prompt should go here
+The cache for model files in Transformers v4.22.0 has been updated. Migrating your old cache. This is a one-time only operation. You can interrupt this and resume the migration later on by calling `transformers.utils.move_cache()`.
+Moving 0 files to the new cache system
+0it [00:00, ?it/s]
+Generating images with prompt: cats playing chess
+WARNING:jax._src.lib.xla_bridge:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
+
+real    5m52.257s
+user    0m0.085s
+sys     0m0.067s
+```
+
+Some notes:
+ + The Dockerfile does not download the models.
+   There are terms and conditions associated with use of these models,
+   and by downloading files from the associate portals you will be accepting
+   them.
+   The *only* download that I have pre-built into the image is a list of words
+   that is unavoidably downloaded and cached as a side effect of importing
+   the `dalle_mini` package.
+   I won't be making any other exceptions.
+ + I can't seem to do anything about those warnings.
+   They shouldn't bother anyone much, since they will just go to a log unless
+   the container is running interactively (i.e. `--tty --interactive`).
+ + If for any reason you need to interact with the image beyond generating
+   images, be sure to override the entrypoint (i.e. `--entrypoint sh`).
 
 
 ### CUDA
 
-Install the proprietary nvidia driver,
-as well as the `cuda` and `cudnn` packages.
-Likely also necessary to reboot, in order to load the kernel modules.
-
-On Arch Linux, cuda libraries and binaries install into `/opt`,
-while the cudnn libraries install into `/usr/lib`.
-Debian-based distributions often use `/usr/lib` for both cuda and cuddn.
-The underlying Python modules assume that the entire toolchain lives in
-`/usr/local/cuda-MAJOR.MINOR`.
-
-In other words, if using Arch Linux, it's also necessary to run:
-
-```
-sudo ln -s /opt/cuda /usr/local/cuda-11.7
-sudo ln -s /usr/include/cudnn*.h /usr/local/cuda-11.7/include
-sudo ln -s /usr/lib/libcudnn*.so /usr/local/cuda-11.7/lib64/
-sudo ln -s /usr/lib/libcudnn*.a /usr/local/cuda-11.7/lib64/
-```
-
-The project can then be setup with `make install-cuda`.
-Running will eat a lot of VRAM though;
-far more than my measly GTX 950 has to offer.
-
-
-
-## To-Do
-
- + Factor logic and functionality (e.g. `print_version`) out of `__main__.py`
-   into an `internals.py` file.
- + Figure out how to automate downloading W&B artifacts in a Makefile.
- + Experiment with re-writing the codebase under the assumption that there is
-   no GPU/TPU.
-   + e.g. is there a cost to `flax.jax_utils.replicate`?
-     It doesn't do anything for a CPU workload.
-   + or is there any benefit to parallelism (via `jax.pmap`) when there is just
-     one compute unit?
-     (i.e. `jax.device_count() == 1`)
- + Figure out how to reflect flavors (in the BSD sense) in `pyproject.toml`,
-   so that this project can be `pipx` installable both with and without cuda.
-   + [Maybe not an option?](https://github.com/python-poetry/poetry/issues/2613)
- + Figure out if `mypy` is an option with this dependency chain.
-
+This is more work than it's worth.
+If it *just works* for you, congrats.
+It doesn't work for me either, if that's any consolation.
 
 
 ## Licensing
